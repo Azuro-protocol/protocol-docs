@@ -1,5 +1,8 @@
 # “V1 > V2 Migration”
 
+
+
+
 > After the migration to the V2,
 there were **changes in contracts** + now the client must use **TheGraph**.
 The documentation will help you understand the changes.
@@ -9,16 +12,23 @@ Below you will find:
  - Table with Changes in contracts
 
 _________________
+## V2 :
+
+
 <details><summary>Description of important changes in contracts</summary>
 <p>
+ 
 ----------------
-If in v1 we operated with events / conditions, then in v2, the "Game" entity appeared.
+ 
+If in v1 we operated with events/conditions, then in v2, the "Game" entity appeared.
 In v2, first of all we create a game, now the game contains information about time, league, country, team names, sport ID
   and now,
-when the oracle receives information about the postponement of the game
-He no longer needs to move many conditions inside separately, he only needs to move one game.
+when the oracle receives information about the postponement of the game.
+We no longer need to move many conditions inside separately, only needs to move one game.
 conditions are now on the contract along with the games
+ 
 -----------------
+ 
 In v2, we can create multiple sets of contracts, without deploying a new set to different locations each time.
 Now we can create new contracts from the Factory contract and connect them.
 An LP is created at the factory, core and azuro bet connect to it
@@ -35,6 +45,7 @@ minCoefficient of the bet
 
 All these parameters remain, but a new one appears. Now you need to pass the address of the core contract to the bet v2. To understand on what contract it is delivered.
 Now on the air conditioner the fields for obtaining a unique key are the address of the contract + the condition field.
+ 
 -------------
 Third difference
 
@@ -90,7 +101,9 @@ ________________________
 
 --------------
 ##### **The game is created on LP **(oracleGameId)**
-function:
+
+<details><summary>function: </summary>
+<p>
 
  ```js
 function **createGame**(
@@ -98,19 +111,22 @@ bytes32 ipfsHash, //detailed info about game stored in IPFS
 uint64 startsAt //timestamp when the game starts
 ) external onlyOracle
 ```
+</p>
+</details>
 
-event:
-
+<details><summary>event:</summary>
+<p>
 
 ```js
 event NewGame(uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt)
 ```
+</p>
+</details>
 
 
---------------
-##### The condition is created on Cores for the game **(oracleConditionId + gameId, gameId - oracle must get it from oracleGameId on LP)**
+<details><summary>function: </summary>
+<p>
 
-function:
  ```js
 function **createCondition**(
     uint256 gameId,
@@ -123,7 +139,12 @@ function **createCondition**(
 
 ```
 >This function **creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
-event:
+</p>
+</details>
+
+<details><summary>event: </summary>
+<p>
+
 ```js
 event **ConditionCreated**(
     uint256 indexed gameId,
@@ -131,23 +152,38 @@ event **ConditionCreated**(
     uint256 indexed conditionId
 );
 ```
+</p>
+</details>
+
 --------------
 ##### The game is shifted on LP **(by oracleGameId)**
 
-function:
+<details><summary>function: </summary>
+<p>
+
  ```js
 function **shiftGame**(uint256 gameId, uint64 startsAt) external onlyOracle
 ```
 >admin-oracle function **for changing game’s startsAt
+</p>
+</details>
 
-event:
+<details><summary>event: </summary>
+<p>
+
 ```js
 event **GameShifted**(uint256 indexed gameId, uint64 newStart);
 ```
+</p>
+</details>
+
 --------------
 ##### Bet is placed on LP(core address + conditionId), proxy call - event **is emitted on Core**
 
-function **bet**:
+
+<details><summary>function **bet**:</summary>
+<p>
+
  ```js
 function **bet**(
     address core,
@@ -158,7 +194,13 @@ function **bet**(
 ```
 > function **to put bet, providing BetData
 
-function **betFor**:
+</p>
+</details>
+
+
+<details><summary>function **betFor**:</summary>
+<p>
+
  ```js
 function **betFor**(
     address bettor,
@@ -168,9 +210,14 @@ function **betFor**(
     ICoreBase.BetData calldata data
 ) external
 ```
-> function **to put bet for bettor
+> function to put bet for bettor
 
-function **betNative**:
+</p>
+</details>
+
+<details><summary>function **betNative**:</summary>
+<p>
+
  ```js
 function **betNative**(
     address core,
@@ -180,7 +227,12 @@ function **betNative**(
 ```
 >function **to put bet in native tokens
 
-**(proxy call - event **is emitted on Core):
+</p>
+</details>
+
+<details><summary>**(proxy call - event **is emitted on Core):</summary>
+<p>
+
 ```js
 function **putBet**(function **putBet**(
     address bettor,
@@ -188,14 +240,25 @@ function **putBet**(function **putBet**(
     BetData calldata data
 ) external override onlyLp
 ```
+</p>
+</details>
+
 --------------
 ##### Condition iscanceled and resolved on Core **(oracleConditionId)
 
-function **resolveCondition**:
+
+<details><summary>function **resolveCondition**:</summary>
+<p>
+
  ```js
 function **resolveCondition**(uint256 oracleConditionId, uint64 outcomeWin)
 ```
-event:
+</p>
+</details>
+
+<details><summary>event:</summary>
+<p>
+
 ```js
 event **ConditionResolved**(
     uint256 indexed conditionId,
@@ -204,29 +267,52 @@ event **ConditionResolved**(
     int128 lpProfit
 );
 ```
+</p>
+</details>
 
-function **cancelByMaintainer**:
+
+
+<details><summary>function **cancelByMaintainer**:</summary>
+<p>
+
  ```js
 function **cancelByMaintainer**(uint256 conditionId) external onlyMaintainer
 ```
 > admin-maintainer function **for canceling exact conditionID
+> 
+</p>
+</details>
 
-function **stopCondition**:
+<details><summary>**stopCondition**:</summary>
+<p>
+
  ```js
 function **stopCondition**(uint256 conditionId, bool flag) external onlyMaintainer
 ```
 > admin-maintainer function **for stop protocol receiving bets for exact conditionId, flag = true - stop bets for conditionId
 
-function **cancelByOracle**:
+</p>
+</details>
+
+<details><summary>function **cancelByOracle**:</summary>
+<p>
+
  ```js
 function **cancelByOracle**(uint256 oracleConditionId) external onlyOracle
 ```
 > oracle function **for canceling exact oracleConditionId
 
+</p>
+</details>
+
 --------------
+
 ##### The bet is redeamed on LP indicating Core **(core address + bet id)
 
-function:
+
+<details><summary>function: </summary>
+<p>
+
  ```js
 LP.withdrawPayout(
         address core,
@@ -240,18 +326,134 @@ function withdrawPayout(address core, uint256 tokenId) external isCore(core)
 ```
 >Function to withdraw bet's prize
 
-
 ```js
 function withdrawPayoutNative(address core, uint256 tokenId) external isCore(core)
 ```
 >Function to withdraw bet's prize in native tokens
 
+
 </p>
 </details>
--------------------
 
-### dictionaries:
->The dictionaries have been updated. More details can be found at the link. Brief information in the table below
+</p>
+</details>
+
+------------------
+
+<details><summary>V2 Events: </summary>
+<p>
+
+> Description of events issued by protocol contracts
+
+### Fabric
+#### Common events
+
+```js
+event NewPool(address lp);
+```
+> new pool added
+
+#### Protocol settings changes events
+
+```js
+event CoreTypeUpdated(string coreType, address beaconCore);
+```
+
+### LP
+#### Common events
+
+```js
+event BettorWin(address indexed bettor, uint256 tokenId, uint256 amount);
+```
+
+> BettorWin issued by withdrawPayout(), withdrawPayoutNative()
+
+```js
+event LiquidityAdded(
+    address indexed account,
+    uint48 indexed leaf,
+    uint256 amount
+);
+```
+> LiquidityAdded issued by addLiquidity(), addLiquidityNative()
+
+```js
+event LiquidityRemoved(
+    address indexed account,
+    uint48 indexed leaf,
+    uint256 amount
+);
+```
+> LiquidityRemoved issued by withdrawLiquidity(), withdrawLiquidityNative()
+
+#### Protocol settings changes events
+```js
+event CoreUpdated(address indexed core, bool active);
+event MaintainerUpdated(address indexed maintainer, bool active);
+event OracleUpdated(address indexed oracle, bool active);
+event AffiliateRewardChanged(uint64 newAffiliateFee);
+event AffiliateRewarded(address indexed affiliate, uint256 amount);
+event DaoRewardChanged(uint64 newDaoFee);
+event MinDepoChanged(uint128 newMinDepo);
+event OracleRewardChanged(uint64 newOracleFee);
+event ReinforcementAbilityChanged(uint128 newReinforcementAbility);
+event WithdrawTimeoutChanged(uint64 newWithdrawTimeout);
+```
+
+
+### Core
+#### Bettor actions events
+
+```js
+event NewBet(
+    address indexed bettor,
+    address indexed affiliate,
+    uint256 indexed conditionId,
+    uint256 tokenId,
+    uint64 outcomeId,
+    uint128 amount,
+    uint64 odds,
+    uint128[2] funds
+);
+```
+> NewBet issued by LP.bet(), LP.betNative(), LP.betFor()
+
+#### Oracle actions events
+
+```js
+event ConditionCreated(
+    uint256 indexed gameId,
+    uint256 indexed oracleConditionId,
+    uint256 indexed conditionId
+);
+```
+
+> ConditionCreated issued by createCondition()
+
+```js
+event ConditionResolved(
+    uint256 indexed conditionId,
+    uint8 state,
+    uint64 outcomeWin,
+    int128 lpProfit
+);
+```
+> ConditionResolved issued by resolveCondition(), cancelByOracle(), cancelByMaintainer()
+
+```js
+event ConditionStopped(uint256 indexed conditionId, bool flag);
+```
+> ConditionStopped issued by stopCondition()
+</p>
+</details>
+
+
+
+------------------
+
+<details><summary>Changes in Dictionaries and Entity Ids:</summary>
+<p>
+> The dictionaries have been updated. More details can be found at the link. Brief information in the table below
 https://github.com/Azuro-protocol/dictionaries/tree/main/v2
 
 | v1 | v2 |usage|
@@ -261,24 +463,38 @@ https://github.com/Azuro-protocol/dictionaries/tree/main/v2
 |param|points||
 |sportType|sport||
 
-## SubGraph+v2:
-### TheGraph
-_________________
-DEV: [https://thegraph.com/hosted-service/subgraph/azuro-protocol/azuro-api-dev]**(https://thegraph.com/hosted-service/subgraph/azuro-protocol/azuro-api-dev)
 
-PROD: [https://thegraph.com/hosted-service/subgraph/azuro-protocol/azuro-api]**(https://thegraph.com/hosted-service/subgraph/azuro-protocol/azuro-api)
+> The entities Ids have been also updated. More details can be found at the link. Brief information in the table below https://github.com/Azuro-protocol/azuro-api-subgraph/blob/928c4867d775c56f012293dabc64ae8dc57f27fa/src/utils/schema.ts
 
-- #### entities 
-  -
-  -
-  -
+| v1        | v2                                               |
+| --------- | ------------------------------------------------ |
+| game      | LP Address + \_ + gameId                         |
+|           |                                                  |
+| condition | Core Address + \_ + conditionId                  |
+|           |                                                  |
+| outcome   | Core Address + \_ + conditionId + \_ + outcomeId |
+|           |                                                  |
+| bet       | Core Address + \_ + betId                        |
+|           |                                                  |
+| freebet   | Freebet Address + \_ + freebetId                 |
+|           |                                                  |
+| LP NFT    | LP Address + \_ + NFT Id                         |
+</p>
+</details>
+
+------------------
+
+##  TheGraph+v2:
 - #### how to use TheGraph - examples
+
+------------------
+
 
 <details><summary>List of events</summary>
 <p>
 request:
 
-```json
+```
 query Sports(
   $sportFilter: Sport_filter, $countryFilter: Country_filter, $leagueFilter: League_filter, $gameFilter: Game_filter, $conditionFilter: Condition_filter!,
   $gameOrderBy: Game_orderBy, $gameOrderDirection: OrderDirection
@@ -315,7 +531,7 @@ query Sports(
 
 fragment Game :
 
-```json
+```
 fragment Game on Game {
   id
   gameId
@@ -352,7 +568,7 @@ fragment Game on Game {
 
 fragment GameCondition:
 
-```json
+```
 fragment GameCondition on Condition {
   id
   conditionId
@@ -486,11 +702,13 @@ if you need a specific league, then __country Filter__ add the country __slug__ 
 </p>
 </details>
 
+------------------
+
 <details><summary>Single event</summary>
 <p>
 
 Request:
-```json
+```
 query Game($oracleGameId: BigInt) {
   games(where: {oracleGameId: $oracleGameId}) {
     ...Game
@@ -502,7 +720,7 @@ query Game($oracleGameId: BigInt) {
 ```
 fragment Game :
 
-```json
+```
 fragment Game on Game {
   id
   gameId
@@ -539,7 +757,7 @@ fragment Game on Game {
 
 fragment GameCondition:
 
-```json
+```
 fragment GameCondition on Condition {
   id
   conditionId
@@ -567,6 +785,8 @@ parameters:
 </p>
 </details>
 
+------------------
+
 <details><summary>History of bets</summary>
 
 is formed from two requests to the graph, getting sports bets and toto
@@ -575,7 +795,7 @@ is formed from two requests to the graph, getting sports bets and toto
 <p>
 
 Request:
-```json
+```
 query Bets($first: Int, $where: Bet_filter) {
   bets(first: $first, orderBy: createdBlockTimestamp, orderDirection: desc, where: $where) {
     ...CommonBet
@@ -584,7 +804,7 @@ query Bets($first: Int, $where: Bet_filter) {
 ```
 
 fragment CommonBet:
-```json
+```
 fragment CommonBet on Bet {
   id
   betId
@@ -615,7 +835,7 @@ fragment CommonBet on Bet {
 ```
 
 fragment CommonBetCondition 	:
-```json
+```
 fragment CommonBetCondition on Condition {
   id
   conditionId
@@ -629,7 +849,7 @@ fragment CommonBetCondition on Condition {
 ```
 
 fragment Game:
-```json
+```
 fragment Game on Game {
   id
   gameId
@@ -681,7 +901,7 @@ parameters:
 
 Request:
 
-```json
+```
 query Bets($first: Int, $where: Bet_filter) {
   bets(first: $first, orderBy: createdAt, where: $where) {
     ...TotoBet
@@ -691,7 +911,7 @@ query Bets($first: Int, $where: Bet_filter) {
 
 fragment TotoBet:
 
-```json
+```
 fragment TotoBet on Bet {
   betId: tokenId
   outcome {
@@ -710,7 +930,7 @@ fragment TotoBet on Bet {
 }
 ```
 fragment TotoBetCondition:
-```json
+```
 fragment TotoBetCondition on Condition {
   gameId: conditionId
   categoryName
@@ -752,8 +972,10 @@ Parameters:
 
 </details>
 
-# Table with all changes in v2
-## LP
+### Table with all changes in contacts v2
+<details><summary>LP</summary>
+<p>
+
 ### functions
 | V1                                                                                                                                                            | V2                                                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -816,7 +1038,15 @@ Parameters:
 |                                                                                                                                                                         | event **GameShifted**(uint256 indexed gameId, uint64 newStart);                                              |
 |                                                                                                                                                                         | event **NewGame**( uint256 indexed oracleGameId, uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt); |
 
-## Core
+
+</p>
+</details>
+
+_________________
+
+<details><summary>Core</summary>
+<p>
+
 ### functions
 | V1                                                                                                                                                                                       | V2                                                                                                                                                                             |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -871,8 +1101,14 @@ Parameters:
 
 
 
-## AzuroBet
 
+</p>
+</details>
+
+______________________________________
+
+<details><summary>AzuroBet</summary>
+<p>
 ### functions 
 | V1 (ERC721)                                                                                            | V2 (ERC1155)                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -899,7 +1135,13 @@ Parameters:
 | ---------------------------- | -- |
 | event LpChanged(address lp); |    |
 
-## Factory
+</p>
+</details>
+
+__________________________________________________________
+
+<details><summary>Factory</summary>
+<p>
 ### function
 | V1 | V2                                                                                                                                          |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -914,3 +1156,16 @@ Parameters:
 |    | event CoreTypeUpdated(string coreType, address beaconCore) |
 |    | event NewCore(address lp, address core, string coreType);  |
 |    | event NewPool(address lp, address core, string coreType);  |
+
+</p>
+</details>
+
+_______________________________
+
+<details><summary>CLICK ME</summary>
+<p>
+
+</p>
+</details>
+
+
