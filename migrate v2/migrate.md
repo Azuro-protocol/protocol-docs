@@ -21,17 +21,61 @@ _________________
 ----------------
  
 If in v1 we operated with events/conditions, then in v2, the "Game" entity appeared.
+
 In v2, first of all we create a game, now the game contains information about time, league, country, team names, sport ID
+
   and now,
 when the oracle receives information about the postponement of the game.
 We no longer need to move many conditions inside separately, only needs to move one game.
 conditions are now on the contract along with the games
+
+ ```js
+function createGame(
+bytes32 ipfsHash, //detailed info about game stored in IPFS
+uint64 startsAt //timestamp when the game starts
+) external onlyOracle
+```
  
+```js
+event NewGame(uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt)
+```
+
+ ```js
+function shiftGame(uint256 gameId, uint64 startsAt) external onlyOracle
+```
+ 
+ > admin-oracle function for changing game’s startsAt
+ 
+```js
+event GameShifted(uint256 indexed gameId, uint64 newStart);
+```
+
+
 -----------------
  
 In v2, we can create multiple sets of contracts, without deploying a new set to different locations each time.
 Now we can create new contracts from the Factory contract and connect them.
-An LP is created at the factory, core and azuro bet connect to it
+An LP is created at the factory. Core and azuro bet connect to it
+
+> Fabric contract creates set of contracts “pool”: LP, Core, configure it and links to AzuroBet. 
+
+```js
+function createPool(
+    address token,
+    uint64 daoFee,
+    uint64 oracleFee,
+    uint64 affiliateFee,
+    string calldata coreType,
+    address oracle
+) external
+```
+> Deploy and tune new Azuro Pool emit event:
+
+```js
+event NewPool(address lp)
+```
+
+
 
 What for?
 
@@ -40,19 +84,26 @@ What for?
 Previously, bets could only be placed before the match. In v2, we plan to launch express bets immediately, life after the start of the game
 
 Betting method changes
-You still need to bet on the LP contract, if in v1 we pulled only the bet method "how much money do we need", "what outcome do we bet on",
-minCoefficient of the bet
-
+You still need to bet on the LP contract, if in v1 we pulled only the bet method "how much money do we need", "what outcome do we bet on", minCoefficient of the bet
 All these parameters remain, but a new one appears. Now you need to pass the address of the core contract to the bet v2. To understand on what contract it is delivered.
-Now on the air conditioner the fields for obtaining a unique key are the address of the contract + the condition field.
+Now on the Conditions the fields for obtaining a unique key are the address of the contract + the condition field.
  
+ ```js
+function bet(
+    address core,
+    uint128 amount,
+    uint64 expiresAt,
+    ICoreBase.BetData calldata data
+) external
+```
+> Function to put bet, providing BetData
 -------------
 Third difference
 
 Before
 Conditions were created and they could have several oracles.
 When we created them, we said "This oracle can create a Condition with some of its internal ID in order to know which one to resolve later"
-But if on the contract it was the very first Condition created, then it received the number 1. We always had two fields: ConditionId - 1,
+But if on the contract it was the very first Condition created, then it received the id - 1. We always had two fields: ConditionId - 1,
   OracleConditionId - 10000, We stored a map on the contract and in order to get one from the other we made a map by the key oracle address + OracleConditionId,
   this is such and such an ordinary ConditionId
  
@@ -65,7 +116,38 @@ But if on the contract it was the very first Condition created, then it received
  
   Now:
   1. we create a game (with some kind of own id, which is in the data provider's database)
+
+
+ ```js
+function createGame(
+bytes32 ipfsHash, //detailed info about game stored in IPFS
+uint64 startsAt //timestamp when the game starts
+) external onlyOracle
+```
+ 
+```js
+event NewGame(uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt)
+```
+
   2. In it, already on the core contract, we create a Condition with some kind of our own internal ID.
+
+ 
+```js
+function createCondition(
+    uint256 gameId,
+    uint256 conditionId,
+    uint64[2] calldata odds,
+    uint64[2] calldata outcomes,
+    uint128 reinforcement,
+    uint64 margin
+) external override
+```
+
+> This function creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
+
+```js
+event ConditionCreated(uint256 indexed gameId, uint256 indexed conditionId);
+```
  
   Those. incremental IDs disappear, OracleGameID and OracleConditionID fields are sold, they are all called
 GameID and ConditionID and they are all arbitrary, come from the provider's date
@@ -92,9 +174,9 @@ ________________________
 
 - bet is placed on LP **(by conditionId)
 
-- conditioner shifts, cancelizes, resolves to Core **(oracleConditionId)
+- Condition shifts, cancelizes, resolves to Core **(oracleConditionId)
 
-- the bet is redimed on LP **(by betId)
+- the bet is redeam on LP **(by betId)
 
 
 #### V2
@@ -102,33 +184,23 @@ ________________________
 --------------
 ##### **The game is created on LP **(oracleGameId)**
 
-<details><summary>function: </summary>
+<details><summary>examples: </summary>
 <p>
 
  ```js
-function **createGame**(
+function createGame(
 bytes32 ipfsHash, //detailed info about game stored in IPFS
 uint64 startsAt //timestamp when the game starts
 ) external onlyOracle
 ```
-</p>
-</details>
 
-<details><summary>event:</summary>
-<p>
 
 ```js
 event NewGame(uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt)
 ```
-</p>
-</details>
-
-
-<details><summary>function: </summary>
-<p>
 
  ```js
-function **createCondition**(
+function createCondition(
     uint256 gameId,
     uint256 oracleConditionId,
     uint64[2] calldata odds,
@@ -138,42 +210,34 @@ function **createCondition**(
 ) external override
 
 ```
->This function **creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
-</p>
-</details>
-
-<details><summary>event: </summary>
-<p>
+>This function creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
 
 ```js
-event **ConditionCreated**(
+event ConditionCreated(
     uint256 indexed gameId,
     uint256 indexed oracleConditionId,
     uint256 indexed conditionId
 );
 ```
+
 </p>
 </details>
 
 --------------
 ##### The game is shifted on LP **(by oracleGameId)**
 
-<details><summary>function: </summary>
+<details><summary>examples: </summary>
 <p>
 
  ```js
-function **shiftGame**(uint256 gameId, uint64 startsAt) external onlyOracle
+function shiftGame(uint256 gameId, uint64 startsAt) external onlyOracle
 ```
->admin-oracle function **for changing game’s startsAt
-</p>
-</details>
-
-<details><summary>event: </summary>
-<p>
+>admin-oracle function for changing game’s startsAt
 
 ```js
-event **GameShifted**(uint256 indexed gameId, uint64 newStart);
+event GameShifted(uint256 indexed gameId, uint64 newStart);
 ```
+
 </p>
 </details>
 
@@ -181,28 +245,22 @@ event **GameShifted**(uint256 indexed gameId, uint64 newStart);
 ##### Bet is placed on LP(core address + conditionId), proxy call - event **is emitted on Core**
 
 
-<details><summary>function **bet**:</summary>
+<details><summary>examples:</summary>
 <p>
 
  ```js
-function **bet**(
+function bet(
     address core,
     uint128 amount,
     uint64 expiresAt,
     ICoreBase.BetData calldata data
 ) external
 ```
-> function **to put bet, providing BetData
+> function to put bet, providing BetData
 
-</p>
-</details>
-
-
-<details><summary>function **betFor**:</summary>
-<p>
 
  ```js
-function **betFor**(
+function betFor(
     address bettor,
     address core,
     uint128 amount,
@@ -211,12 +269,6 @@ function **betFor**(
 ) external
 ```
 > function to put bet for bettor
-
-</p>
-</details>
-
-<details><summary>function **betNative**:</summary>
-<p>
 
  ```js
 function **betNative**(
@@ -227,12 +279,6 @@ function **betNative**(
 ```
 >function **to put bet in native tokens
 
-</p>
-</details>
-
-<details><summary>**(proxy call - event **is emitted on Core):</summary>
-<p>
-
 ```js
 function **putBet**(function **putBet**(
     address bettor,
@@ -240,24 +286,22 @@ function **putBet**(function **putBet**(
     BetData calldata data
 ) external override onlyLp
 ```
+
+
 </p>
 </details>
+
 
 --------------
 ##### Condition iscanceled and resolved on Core **(oracleConditionId)
 
 
-<details><summary>function **resolveCondition**:</summary>
+<details><summary>examples:</summary>
 <p>
 
  ```js
 function **resolveCondition**(uint256 oracleConditionId, uint64 outcomeWin)
 ```
-</p>
-</details>
-
-<details><summary>event:</summary>
-<p>
 
 ```js
 event **ConditionResolved**(
@@ -267,50 +311,32 @@ event **ConditionResolved**(
     int128 lpProfit
 );
 ```
-</p>
-</details>
 
-
-
-<details><summary>function **cancelByMaintainer**:</summary>
-<p>
-
- ```js
+```js
 function **cancelByMaintainer**(uint256 conditionId) external onlyMaintainer
 ```
 > admin-maintainer function **for canceling exact conditionID
-> 
-</p>
-</details>
 
-<details><summary>**stopCondition**:</summary>
-<p>
 
  ```js
 function **stopCondition**(uint256 conditionId, bool flag) external onlyMaintainer
 ```
 > admin-maintainer function **for stop protocol receiving bets for exact conditionId, flag = true - stop bets for conditionId
 
-</p>
-</details>
-
-<details><summary>function **cancelByOracle**:</summary>
-<p>
-
  ```js
 function **cancelByOracle**(uint256 oracleConditionId) external onlyOracle
 ```
 > oracle function **for canceling exact oracleConditionId
-
 </p>
 </details>
+
 
 --------------
 
 ##### The bet is redeamed on LP indicating Core **(core address + bet id)
 
 
-<details><summary>function: </summary>
+<details><summary>examples: </summary>
 <p>
 
  ```js
@@ -1161,11 +1187,3 @@ __________________________________________________________
 </details>
 
 _______________________________
-
-<details><summary>CLICK ME</summary>
-<p>
-
-</p>
-</details>
-
-
