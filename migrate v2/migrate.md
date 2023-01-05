@@ -3,7 +3,7 @@
 
 
 
-> > In version 2, changes were made to help simplify the work with contracts and add new features to work with them. If you choose to migrate to version 2, we also recommended to use  **TheGraph**.
+> In version 2, changes were made to help simplify the work with contracts and add new features to work with them. If you choose to migrate to version 2, we also recommended to use  **TheGraph**.
 The documentation will help you understand the changes.
 Below you will find:
  - Description of important changes in contracts
