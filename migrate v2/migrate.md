@@ -4,7 +4,7 @@
 
 
 > After the migration to the V2,
-there were **changes in contracts** + now the client must use **TheGraph**.
+there were **changes in contracts** + recommended to use  **TheGraph**.
 The documentation will help you understand the changes.
 Below you will find:
  - Description of important changes in contracts
@@ -15,19 +15,13 @@ _________________
 ## V2 :
 
 
-<details><summary>Description of important changes in contracts</summary>
-<p>
- 
-----------------
- 
-If in v1 we operated with events/conditions, then in v2, the "Game" entity appeared.
+If in __v1__ we operated with __events/conditions__, then in v2, the __"Game"__ entity appeared.
 
-In v2, first of all we create a game, now the game contains information about time, league, country, team names, sport ID
+In __v2__, first of all we create a __game__, now the __game__ contains information about time, league, country, team names, sport ID
 
-  and now,
-when the oracle receives information about the postponement of the game.
-We no longer need to move many conditions inside separately, only needs to move one game.
-conditions are now on the contract along with the games
+And now,
+when the oracle receives information about the postponement of the game, we no longer need to move many conditions inside separately, only needs to move one game.
+Conditions are now on the contract along with the games
 
  ```js
 function createGame(
@@ -53,9 +47,9 @@ event GameShifted(uint256 indexed gameId, uint64 newStart);
 
 -----------------
  
-In v2, we can create multiple sets of contracts, without deploying a new set to different locations each time.
+In __v2__, we can create multiple sets of contracts, without deploying a new set to different locations each time.
 Now we can create new contracts from the Factory contract and connect them.
-An LP is created at the factory. Core and azuro bet connect to it
+An __LP__ is created at the factory. Core and azuro bet connect to it
 
 > Fabric contract creates set of contracts “pool”: LP, Core, configure it and links to AzuroBet. 
 
@@ -77,7 +71,7 @@ event NewPool(address lp)
 
 
 
-What for?
+__What for?__
 
 - We can set multiple LPs and one liquidity pool can have multiple core contracts.
 
@@ -100,22 +94,19 @@ function bet(
 -------------
 Third difference
 
-Before
+__Before__
 Conditions were created and they could have several oracles.
-When we created them, we said "This oracle can create a Condition with some of its internal ID in order to know which one to resolve later"
-But if on the contract it was the very first Condition created, then it received the id - 1. We always had two fields: ConditionId - 1,
-  OracleConditionId - 10000, We stored a map on the contract and in order to get one from the other we made a map by the key oracle address + OracleConditionId,
-  this is such and such an ordinary ConditionId
+ We always had two fields: __ConditionId, OracleConditionId__. We stored a map on the contract and in order to get one from the other we made a map by the key oracle address + OracleConditionId,
  
   This was so that several oracles could work with the same core and create different conditions.
   For example, so that they are responsible for different data providers and do not conflict on the same core.
  
-  Now it is possible to deploy several cores within one LP. Or several LPs. we decided to abandon the multiple oracles. There may still be a few oracles, but
+  __Now__ it is possible to deploy several cores within one LP. Or several LPs. we decided to abandon the multiple oracles. There may still be a few oracles, but
   It will be assumed that they always work with the same data set.
   That's why we left the map.
  
   Now:
-  1. we create a game (with some kind of own id, which is in the data provider's database)
+  1. We create a game (with some kind of own id, which is in the data provider's database)
 
 
  ```js
@@ -149,16 +140,11 @@ function createCondition(
 event ConditionCreated(uint256 indexed gameId, uint256 indexed conditionId);
 ```
  
-  Those. incremental IDs disappear, OracleGameID and OracleConditionID fields are sold, they are all called
+  Incremental IDs disappear, OracleGameID and OracleConditionID fields are sold, they are all called
 GameID and ConditionID and they are all arbitrary, come from the provider's date
 
 
-Method signature changes (see below)
-
-
-
-</p>
-</details>
+Method signature changes (see in __Table with all changes in contacts v2__ below)
 
 
 ________________________
@@ -166,23 +152,23 @@ ________________________
 <details><summary>Difference between V1 and V2 with code examples</summary>
 <p>
 
-#### V1:
+### V1:
 
 --------------
 
-- condition is created on Core **(oracleConditionId)
+- condition is created on Core (oracleConditionId)
 
-- bet is placed on LP **(by conditionId)
+- bet is placed on LP (by conditionId)
 
-- Condition shifts, cancelizes, resolves to Core **(oracleConditionId)
+- Condition shifts, cancelizes, resolves to Core (oracleConditionId)
 
-- the bet is redeam on LP **(by betId)
+- the bet is redeam on LP (by betId)
 
 
-#### V2
+### V2
 
 --------------
-##### **The game is created on LP **(oracleGameId)**
+#### The game is created on LP **(oracleGameId)**
 
 <details><summary>examples: </summary>
 <p>
@@ -210,7 +196,7 @@ function createCondition(
 ) external override
 
 ```
->This function creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
+> This function creates new conditions and provide contract with initial odds, allowed outcomes and  condition date. 
 
 ```js
 event ConditionCreated(
@@ -224,7 +210,7 @@ event ConditionCreated(
 </details>
 
 --------------
-##### The game is shifted on LP **(by oracleGameId)**
+#### The game is shifted on LP **(by oracleGameId)**
 
 <details><summary>examples: </summary>
 <p>
@@ -242,7 +228,7 @@ event GameShifted(uint256 indexed gameId, uint64 newStart);
 </details>
 
 --------------
-##### Bet is placed on LP(core address + conditionId), proxy call - event **is emitted on Core**
+#### Bet is placed on LP(core address + conditionId), proxy call - event **is emitted on Core**
 
 
 <details><summary>examples:</summary>
@@ -271,16 +257,16 @@ function betFor(
 > function to put bet for bettor
 
  ```js
-function **betNative**(
+function betNative(
     address core,
     uint64 expiresAt,
     ICoreBase.BetData calldata data
 ) external payable
 ```
->function **to put bet in native tokens
+> function to put bet in native tokens
 
 ```js
-function **putBet**(function **putBet**(
+function putBet(
     address bettor,
     uint128 amount,
     BetData calldata data
@@ -293,18 +279,18 @@ function **putBet**(function **putBet**(
 
 
 --------------
-##### Condition iscanceled and resolved on Core **(oracleConditionId)
+#### Condition iscanceled and resolved on Core (oracleConditionId)
 
 
 <details><summary>examples:</summary>
 <p>
 
  ```js
-function **resolveCondition**(uint256 oracleConditionId, uint64 outcomeWin)
+function resolveCondition(uint256 oracleConditionId, uint64 outcomeWin)
 ```
 
 ```js
-event **ConditionResolved**(
+event ConditionResolved(
     uint256 indexed conditionId,
     uint8 state,
     uint64 outcomeWin,
@@ -313,27 +299,27 @@ event **ConditionResolved**(
 ```
 
 ```js
-function **cancelByMaintainer**(uint256 conditionId) external onlyMaintainer
+function cancelByMaintainer(uint256 conditionId) external onlyMaintainer
 ```
-> admin-maintainer function **for canceling exact conditionID
+> admin-maintainer function for canceling exact conditionID
 
 
  ```js
-function **stopCondition**(uint256 conditionId, bool flag) external onlyMaintainer
+function stopCondition(uint256 conditionId, bool flag) external onlyMaintainer
 ```
-> admin-maintainer function **for stop protocol receiving bets for exact conditionId, flag = true - stop bets for conditionId
+> admin-maintainer function for stop protocol receiving bets for exact conditionId, flag = true - stop bets for conditionId
 
  ```js
-function **cancelByOracle**(uint256 oracleConditionId) external onlyOracle
+function cancelByOracle(uint256 oracleConditionId) external onlyOracle
 ```
-> oracle function **for canceling exact oracleConditionId
+> oracle function for canceling exact oracleConditionId
 </p>
 </details>
 
 
 --------------
 
-##### The bet is redeamed on LP indicating Core **(core address + bet id)
+#### The bet is redeamed on LP indicating Core (core address + bet id)
 
 
 <details><summary>examples: </summary>
@@ -350,12 +336,12 @@ LP.withdrawPayout(
 ```js
 function withdrawPayout(address core, uint256 tokenId) external isCore(core)
 ```
->Function to withdraw bet's prize
+> Function to withdraw bet's prize
 
 ```js
 function withdrawPayoutNative(address core, uint256 tokenId) external isCore(core)
 ```
->Function to withdraw bet's prize in native tokens
+> Function to withdraw bet's prize in native tokens
 
 
 </p>
@@ -372,21 +358,21 @@ function withdrawPayoutNative(address core, uint256 tokenId) external isCore(cor
 > Description of events issued by protocol contracts
 
 ### Fabric
-#### Common events
+### Common events
 
 ```js
 event NewPool(address lp);
 ```
 > new pool added
 
-#### Protocol settings changes events
+### Protocol settings changes events
 
 ```js
 event CoreTypeUpdated(string coreType, address beaconCore);
 ```
 
 ### LP
-#### Common events
+### Common events
 
 ```js
 event BettorWin(address indexed bettor, uint256 tokenId, uint256 amount);
@@ -412,7 +398,7 @@ event LiquidityRemoved(
 ```
 > LiquidityRemoved issued by withdrawLiquidity(), withdrawLiquidityNative()
 
-#### Protocol settings changes events
+### Protocol settings changes events
 ```js
 event CoreUpdated(address indexed core, bool active);
 event MaintainerUpdated(address indexed maintainer, bool active);
@@ -428,7 +414,7 @@ event WithdrawTimeoutChanged(uint64 newWithdrawTimeout);
 
 
 ### Core
-#### Bettor actions events
+### Bettor actions events
 
 ```js
 event NewBet(
@@ -444,7 +430,7 @@ event NewBet(
 ```
 > NewBet issued by LP.bet(), LP.betNative(), LP.betFor()
 
-#### Oracle actions events
+### Oracle actions events
 
 ```js
 event ConditionCreated(
@@ -479,6 +465,7 @@ event ConditionStopped(uint256 indexed conditionId, bool flag);
 
 <details><summary>Changes in Dictionaries and Entity Ids:</summary>
 <p>
+
 > The dictionaries have been updated. More details can be found at the link. Brief information in the table below
 https://github.com/Azuro-protocol/dictionaries/tree/main/v2
 
@@ -511,7 +498,7 @@ https://github.com/Azuro-protocol/dictionaries/tree/main/v2
 ------------------
 
 ##  TheGraph+v2:
-- #### how to use TheGraph - examples
+- ### how to use TheGraph - examples
 
 ------------------
 
@@ -1135,7 +1122,9 @@ ______________________________________
 
 <details><summary>AzuroBet</summary>
 <p>
+
 ### functions 
+
 | V1 (ERC721)                                                                                            | V2 (ERC1155)                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | function burn(uint256 tokenId) external                                                                | function tokensOfOwner(address owner\_) external view returns (uint256\[\] memory ids)                                           |
@@ -1168,12 +1157,14 @@ __________________________________________________________
 
 <details><summary>Factory</summary>
 <p>
+
 ### function
-| V1 | V2                                                                                                                                          |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-|    | function updateCoreType(string calldata coreType, address beaconCore) external onlyOwner                                                    |
+                                                                   
+| V1 | V2                                                         |
+| -- | ---------------------------------------------------------- |
+|    | function updateCoreType(string calldata coreType, address beaconCore) external onlyOwner |
 |    | function createPool(address token, uint64 daoFee, uint64 oracleFee, uint64 affiliateFee, string calldata coreType, address oracle) external |
-|    | function plugCore(address lpAddress, string calldata coreType) external                                                                     |
+|    |  function plugCore(address lpAddress, string calldata coreType) external  |
 
 ### events
 
