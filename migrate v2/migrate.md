@@ -1,46 +1,48 @@
 # “V1 > V2 Migration”
 
 
+Version 2 changes were made to help simplify work with the contracts. If you choose to migrate to version 2, we also recommended to use **TheGraph**.
+This docs will help you understand the changes. Below you will find:
 
-
-> In version 2, changes were made to help simplify the work with contracts and add new features to work with them. If you choose to migrate to version 2, we also recommended to use  **TheGraph**.
-The documentation will help you understand the changes.
-Below you will find:
- - Description of important changes in contracts
+ - The changes in the contracts
  - **GraphQL** query examples
- - Table with Changes in contracts
-
-_________________
-## V2 :
 
 
-If in __v1__ we operated with __events/conditions__, then in v2, the __"Game"__ entity appeared.
+## Major changes
 
-In __v2__, first of all we create a __game__, now the __game__ contains information about time, league, country, team names, sport ID
 
-And now,
-when the oracle receives information about the postponement of the game, we no longer need to move many conditions inside separately, only needs to move one game.
-Conditions are now on the contract along with the games
+If in __V1__ we operated with __conditions__ which contained game data, then in __V2__ the __Game__ entity was added. __Game__ data contains game start date, league, country, team names and images, sport ID.
 
- ```js
+When the oracle receives an information about the postponement of the game, we no longer need to update data of all the conditions related to the game, instead the game will be updated.
+
+ ```solidity
 function createGame(
-bytes32 ipfsHash, //detailed info about game stored in IPFS
-uint64 startsAt //timestamp when the game starts
+   bytes32 ipfsHash, // detailed info about game stored in IPFS
+   uint64 startsAt // timestamp (in seconds) when the game starts
 ) external onlyOracle
 ```
  
-```js
-event NewGame(uint256 indexed gameId, bytes32 ipfsHash, uint64 startsAt)
+```solidity
+event NewGame(
+  uint256 indexed gameId, 
+  bytes32 ipfsHash, 
+  uint64 startsAt
+)
 ```
 
- ```js
-function shiftGame(uint256 gameId, uint64 startsAt) external onlyOracle
+ ```solidity
+// admin-oracle function for changing game’s startsAt
+function shiftGame(
+   uint256 gameId, 
+   uint64 startsAt
+) external onlyOracle
 ```
  
- > admin-oracle function for changing game’s startsAt
- 
-```js
-event GameShifted(uint256 indexed gameId, uint64 newStart);
+```solidity
+event GameShifted(
+  uint256 indexed gameId, 
+  uint64 newStart
+)
 ```
 
 
